@@ -1,28 +1,25 @@
 const inputs = document.querySelectorAll("input");
 const outputs = document.querySelectorAll("output");
 const resetBtn = document.querySelector(".btn-reset");
-let fullScreenBtn = document.querySelector(".fullscreen");
+const fullScreenBtn = document.querySelector(".fullscreen");
 const nextBtn = document.querySelector(".btn-next");
 const download = document.querySelector(".btn-save");
-const img = document.querySelector("img");
+const image = document.querySelector("img");
+let fileInput = document.getElementById("btnInput");
+let fileDisplayArea = document.getElementById("img-container");
 
 function handleUpdate() {
   const suffix = this.dataset.sizing || "";
-  document
-    .querySelector("img")
-    .style.setProperty("--" + this.name, this.value + suffix);
-  const lol = document.getElementsByName(this.name);
-  lol[0].parentNode.lastElementChild.innerHTML = this.value;
+  image.style.setProperty("--" + this.name, this.value + suffix);
+  const filterNumber = document.getElementsByName(this.name);
+  filterNumber[0].parentNode.lastElementChild.innerHTML = this.value;
 }
 
 inputs.forEach((input) => input.addEventListener("change", handleUpdate));
 inputs.forEach((input) => input.addEventListener("mousemove", handleUpdate));
-fullScreenBtn.onclick = () => {
-  activateFullscreen(document.documentElement);
-};
 
 resetBtn.onclick = () => {
-  document.querySelector("img").attributeStyleMap.clear();
+  image.attributeStyleMap.clear();
   for (let i = 0; i < outputs.length; i++) {
     const lol = document.getElementsByName(inputs[i].name);
     if (i === 3) {
@@ -35,7 +32,7 @@ resetBtn.onclick = () => {
   }
 };
 
-let imgageIndex = "01";
+let imgageIndex = 1;
 let times = "";
 
 nextBtn.onclick = () => {
@@ -48,22 +45,34 @@ nextBtn.onclick = () => {
     times = "day";
   } else times = "evening";
 
-  document.querySelector("img").src =
-    "https://raw.githubusercontent.com/rolling-scopes-school/stage1-tasks/assets/images/" +
-    times +
-    "/" +
+  // image.src =
+  //   "https://raw.githubusercontent.com/rolling-scopes-school/stage1-tasks/assets/images/" +
+  //   times +
+  //   "/" +
+  //   imgageIndex +
+  //   ".jpg";
+
+  image.src =
+    "./assets/img/image" +
     imgageIndex +
     ".jpg";
 
-  if (Number(imgageIndex) < 9) {
-    helpIndex = "0" + Number(++imgageIndex);
-    imgageIndex = helpIndex;
-  } else {
-    helpIndex = String(Number(++imgageIndex));
-  }
-  if (Number(imgageIndex === 21)) {
-    imgageIndex = "01";
-  }
+    imgageIndex++;
+    if (imgageIndex == 10) imgageIndex = 1;
+
+  // if (Number(imgageIndex) < 9) {
+  //   helpIndex = "0" + Number(++imgageIndex);
+  //   imgageIndex = helpIndex;
+  // } else {
+  //   helpIndex = String(Number(++imgageIndex));
+  // }
+  // if (Number(imgageIndex === 21)) {
+  //   imgageIndex = "01";
+  // }
+};
+
+fullScreenBtn.onclick = () => {
+  activateFullscreen(document.documentElement);
 };
 
 function activateFullscreen(element) {
@@ -96,33 +105,43 @@ function activateFullscreen(element) {
 }
 
 window.onload = function () {
-  let fileInput = document.getElementById("btnInput");
-  let fileDisplayArea = document.getElementById("img");
-
   fileInput.addEventListener("change", function (e) {
     let file = fileInput.files[0];
     let imageType = /image.*/;
-    if (file.type.match(imageType)) {
+   
       let reader = new FileReader();
       reader.onload = function (e) {
         fileDisplayArea.innerHTML = "";
-        let img = new Image();
-        img.src = reader.result;
-        fileDisplayArea.appendChild(img);
-        handleUpdate();
+        let imgLoad = new Image();
+        imgLoad.src = reader.result;
+        fileDisplayArea.appendChild(imgLoad);
       };
       reader.readAsDataURL(file);
-    } else {
-      fileDisplayArea.innerHTML = "File not supported!";
-    }
+  
   });
 };
 
-download.addEventListener("click", function (e) {
-  console.log(img.src);
-  let link = document.createElement("a");
-  link.setAttribute("download", "download-pic.jpg");
-  link.setAttribute("href", img.src);
-  link.click();
-  link.delete;
-});
+function drawImage() {
+  let img = new Image();
+  img.setAttribute("crossOrigin", "anonymous");
+  img.src = image.attributes.src.value;
+  img.height = image.naturalHeight;
+  img.width = image.naturalWidth;
+  img.filter = getComputedStyle(image).filter;
+
+  img.onload = function () {
+    const canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext("2d");
+    ctx.filter = img.filter;
+    ctx.drawImage(img, 0, 0);
+    let link = document.createElement("a");
+    link.download = "download.png";
+    link.href = canvas.toDataURL("image/jpeg");
+    link.click();
+    link.delete;
+  };
+}
+
+download.addEventListener("click", drawImage);
